@@ -42,9 +42,13 @@ export function WispRequestWrapper(connection: WispConnectionT): BaseNetworkObje
     var conn = connection.connection;
     var base: BaseNetworkObjectT = new BaseNetworkObject();
 
-    base.get = function(url: string, port?: number): Promise<Response> {
+    base.get = function(url: string): Promise<Response> {
         return new Promise<Response>((res, rej) => {
-            var stream = conn.create_stream((new URL(url)).hostname, port || 80);
+            var urlObj: URL = new URL(url);
+            var stream = conn.create_stream(
+                urlObj.hostname,
+                urlObj.port ? parseInt(urlObj.port, 10) : 80
+            );
             var accumulated: string = "";
             stream.onmessage = (data) => {
                 let text = new TextDecoder().decode(data);
