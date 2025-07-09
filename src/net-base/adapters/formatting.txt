@@ -1,0 +1,2 @@
+For network requests such as get/post/etc, the function should be written as a promise.
+This is to avoid any conflicts with the way that different connection libraries handle responses.
