@@ -1,5 +1,5 @@
 export interface BaseNetworkObjectT {
-    get(url: string, port?: number): Promise<Response>,
+    get(url: string, options?: { headers: Record<string, string> }): Promise<Response>,
     onopen(): void,
     onclose(): void,
     onerror(): void
@@ -10,7 +10,7 @@ export class BaseNetworkObject implements BaseNetworkObjectT {
     onclose!: () => void;
     onerror!: () => void;
     constructor() {
-        this.get = (_url: string, _port?: number) => Promise.resolve(new Response());
+        this.get = (_url: string, _options?: object) => Promise.resolve(new Response());
         this.onopen = () => void 0;
         this.onclose = () => void 0;
         this.onerror = () => void 0;

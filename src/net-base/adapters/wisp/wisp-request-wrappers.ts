@@ -42,12 +42,12 @@ export function WispRequestWrapper(connection: WispConnectionT): BaseNetworkObje
     var conn = connection.connection;
     var base: BaseNetworkObjectT = new BaseNetworkObject();
 
-    base.get = function(url: string): Promise<Response> {
+    base.get = function(url: string, options?: { headers?: Record<string, string> }): Promise<Response> {
         return new Promise<Response>((res, rej) => {
             var urlObj: URL = new URL(url);
             var stream = conn.create_stream(
                 urlObj.hostname,
-                urlObj.port ? parseInt(urlObj.port, 10) : 80
+                urlObj.port ? parseInt(url.split("/")[2].split(":")[1]) : 80
             );
             var accumulated: string = "";
             stream.onmessage = (data) => {
@@ -63,7 +63,7 @@ export function WispRequestWrapper(connection: WispConnectionT): BaseNetworkObje
                     rej("0x"+reason.toString(16).toUpperCase());
                 }
             };
-            let payload = payloads.get(url);
+            let payload = payloads.get(url, options?.headers || {});
             stream.send(new TextEncoder().encode(payload));
         })
     }

@@ -5,7 +5,7 @@ interface ConnectionMethods {
     onConnectionOpen: (callback: (() => void) | (() => Promise<void>)) => void;
     onConnectionClose: (callback: (() => void) | (() => Promise<void>)) => void;
     onConnectionError: (callback: (() => void) | (() => Promise<void>)) => void;
-    get: (url: string, port?: number) => Promise<Response>
+    get: (url: string, options?: { headers: Record<string, string> }) => Promise<Response>
 }
 interface CastAsWithListeners {
     [key: string]: unknown,
