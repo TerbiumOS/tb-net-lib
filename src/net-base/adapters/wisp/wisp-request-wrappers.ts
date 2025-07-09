@@ -63,7 +63,7 @@ export function WispRequestWrapper(connection: WispConnectionT): BaseNetworkObje
                     rej("0x"+reason.toString(16).toUpperCase());
                 }
             };
-            let payload = payloads.get(url, options?.headers || {});
+            let payload = payloads.get(url, { ...(options?.headers || {}), "User-Agent": "TerbiumNetMan/1.0 (+https://github.com/TerbiumOS/tb-net-lib)"});
             stream.send(new TextEncoder().encode(payload));
         })
     }
