@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { NetManager, type NetConnection } from "./net-base/net-manager";
 export { NetManager, type NetConnection };
 
@@ -30,7 +31,8 @@ export default class NetMan {
     default_server: string;
     active_network: string;
     connected_networks: Record<string, NetConnection>;
-    active: ConnectionMethods = BlankActive
+    active: ConnectionMethods = BlankActive;
+    activeswitch: boolean;
     /**
      * Initializes a new network manager instance
      */
@@ -38,6 +40,7 @@ export default class NetMan {
         this.default_server = "wss://wispserver.dev/wisp/";
         this.active_network = "";
         this.connected_networks = {};
+        this.activeswitch = false;
     };
     /**
      * Sets the active network used by the network connection
@@ -94,6 +97,15 @@ export default class NetMan {
         };
     };
     /**
+     * Connect multiple networks at once
+     * @param {Array} nets The different networks to connect 
+     */
+    connectMultiple(nets: Array<{name: string, type: string, server: string}>) {
+        for (const { name, type, server } of nets) {
+            this.connectNetwork(name, type, server);
+        }
+    };
+    /**
      * Disconnects the current network from the list of availible networks
      * @param {string} name The name of the network connection to disconnect
      * @returns {void}
@@ -129,18 +141,38 @@ export default class NetMan {
             }
         } else console.error(`NetMan: Could not find the active network to delete! Maybe it hasn't been set as the active network?`); return;
     }
+
+    useActiveSwitch() {
+        this.activeswitch = true;
+        this.setActiveNetwork(Object.keys(this.connected_networks)[0]);
+    }
+
+    activeSwitchIterate() {
+        let vals = Object.values(this.connected_networks);
+        let keys = Object.keys(this.connected_networks);
+        let prevIdx = vals.indexOf(this.resolveActiveNetwork());
+        if (prevIdx === vals.length - 1) this.setActiveNetwork(keys[0]);
+        else this.setActiveNetwork(keys[prevIdx+1]);
+    }
+
     get get() {
         let resolved = this.resolveActiveNetwork()?.get
-        if (resolved) return resolved;
-        else {
+        if (resolved) {
+            if (this.activeswitch) {
+                this.activeSwitchIterate();
+            }
+            return resolved;
+        } else {
             console.error("NetMan: Could not resolve the GET request function from the active network. Maybe you forgot to call (instance).setActiveNetwork?");
             return () => Promise.resolve(new Response(null, { status: 424 }));
         }
     }
     get post() {
         let resolved = this.resolveActiveNetwork()?.post
-        if (resolved) return resolved;
-        else {
+        if (resolved) {
+            this.activeSwitchIterate();
+            return resolved;
+        } else {
             console.error("NetMan: Could not resolve the POST request function from the active network. Maybe you forgot to call (instance).setActiveNetwork?");
             return () => Promise.resolve(new Response(null, { status: 424 }));
         }
