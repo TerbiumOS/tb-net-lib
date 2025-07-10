@@ -5,7 +5,8 @@ interface ConnectionMethods {
     onConnectionOpen: (callback: (() => void) | (() => Promise<void>)) => void;
     onConnectionClose: (callback: (() => void) | (() => Promise<void>)) => void;
     onConnectionError: (callback: (() => void) | (() => Promise<void>)) => void;
-    get: (url: string, options?: { headers: Record<string, string> }) => Promise<Response>
+    get: (url: string, options?: { headers: Record<string, string> }) => Promise<Response>,
+    post: (url: string, options?: { headers: Record<string, string>, body: string }) => Promise<Response>
 }
 interface CastAsWithListeners {
     [key: string]: unknown,
@@ -16,7 +17,8 @@ const BlankActive: ConnectionMethods = {
     onConnectionOpen: (): void => {},
     onConnectionClose: (): void => {},
     onConnectionError: (): void => {},
-    get: (): Promise<Response> => Promise.resolve(new Response())
+    get: (): Promise<Response> => Promise.resolve(new Response()),
+    post: (): Promise<Response> => Promise.resolve(new Response())
 }
 
 /**
@@ -83,7 +85,8 @@ export default class NetMan {
                 onConnectionOpen: (callback: (() => void) | (() => Promise<void>)): void => {this.connected_networks[name].onopen = callback },
                 onConnectionClose: (callback: (() => void) | (() => Promise<void>)): void => { this.connected_networks[name].onclose = callback },
                 onConnectionError: (callback: (() => void) | (() => Promise<void>)): void => { this.connected_networks[name].onerror = callback },
-                get: this.connected_networks[name].get
+                get: this.connected_networks[name].get,
+                post: this.connected_networks[name].post
             } satisfies ConnectionMethods;
         } catch(err) {
             console.error(`NetMan: Error occured whilist adding network`);
@@ -131,6 +134,14 @@ export default class NetMan {
         if (resolved) return resolved;
         else {
             console.error("NetMan: Could not resolve the GET request function from the active network. Maybe you forgot to call (instance).setActiveNetwork?");
+            return () => Promise.resolve(new Response(null, { status: 424 }));
+        }
+    }
+    get post() {
+        let resolved = this.resolveActiveNetwork()?.post
+        if (resolved) return resolved;
+        else {
+            console.error("NetMan: Could not resolve the POST request function from the active network. Maybe you forgot to call (instance).setActiveNetwork?");
             return () => Promise.resolve(new Response(null, { status: 424 }));
         }
     }

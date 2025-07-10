@@ -68,5 +68,32 @@ export function WispRequestWrapper(connection: WispConnectionT): BaseNetworkObje
         })
     }
 
+    // TODO: Get this to implement headers properly
+    base.post = function(url: string, options?: { headers?: Record<string, string>, body?: string }): Promise<Response> {
+        return new Promise<Response>((res, rej) => {
+            var urlObj: URL = new URL(url);
+            var stream = conn.create_stream(
+                urlObj.hostname,
+                urlObj.port ? parseInt(url.split("/")[2].split(":")[1]) : 80
+            );
+            var accumulated: string = "";
+            stream.onmessage = (data) => {
+                let text = new TextDecoder().decode(data);
+                accumulated += text;
+            };
+            stream.onclose = (reason) => {
+                // @ts-ignore
+                if (reason == 0x02) {
+                    res(ContentParser(accumulated));
+                } else {
+                    // @ts-ignore
+                    rej("0x"+reason.toString(16).toUpperCase());
+                }
+            };
+            let payload = payloads.post(url, options?.body || "", { ...(options?.headers || {}), "User-Agent": "TerbiumNetMan/1.0 (+https://github.com/TerbiumOS/tb-net-lib)"}, options?.headers?.["Content-Type"] || undefined);
+            stream.send(new TextEncoder().encode(payload));
+        })
+    };
+
     return base;
 }
